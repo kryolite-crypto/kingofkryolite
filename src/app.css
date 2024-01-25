@@ -1,0 +1,51 @@
+body {
+  background-color: #191919FF;
+  color: white;
+  font-size: 12px;
+  }
+
+.column {
+      margin-left: 5px;
+      margin-right: 5px;
+  }
+
+.header {
+  line-height: 1;
+  margin: 0;
+  opacity: 0.5;
+}
+
+.text {
+  line-height: 1.5;
+  margin: 0;
+  display: block;
+}
+
+.title {
+  margin-bottom: -20px;
+  margin-top: 20px;
+  border-left: 1px solid darkgray;
+  padding-left: 5px;
+}
+
+a {
+  color: white;
+  text-decoration: none;
+}
+
+a:hover {
+  color: darkgray;
+}
+
+.container {
+  margin-top: 20px;
+  border-color: darkgray;
+  border-style: solid;
+  border-width: 1px;
+  padding: 10px;
+  display:flex;
+}
+
+.container .header {
+  margin-bottom: 5px;
+}
