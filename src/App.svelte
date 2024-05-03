@@ -1,17 +1,27 @@
 <script>
   import Navbar from "./lib/navbar.svelte";
+  import Modal from './lib/Modal.svelte';
 
-  const contractAddress = "kryo:wea3prgphv2dmxjh46sadh77r57pv62wg2m7dt8v8a";
-  const url = "http://localhost:5000";
-  const KRYO_DIVISION = 1000000;
+  const contractAddress = "kryo:aeckjgbfj5u8grv35ngqkyh85caekb5zregctx4t";
+  const url = "https://testnet-1.kryolite.io";
 
   let response = "";
   let contract;
+  let showModal = false;
+  let params;
+  let name;
 
-  // By default give this address:
-  addressInputted({
-    detail: { data: contractAddress },
-  });
+  const evtSource = new EventSource(`${url}/contract/${contractAddress}/listen`);
+
+  evtSource.onmessage = (event) => {
+    var ev = JSON.parse(event.data)
+
+    if (ev.Type === "Custom" && ev.Event.EventData[0] === "0") {
+      load();
+    }
+  };
+
+  load();
 
   async function post(url, path, body) {
     return new Promise((resolve, reject) => {
@@ -36,16 +46,11 @@
     });
   }
 
-  async function addressInputted(event) {
-    let address = event.detail.data;
-
-    if (!address) return;
-    if (!address.startsWith("kryo:")) return;
-
-    post(url, `/contract/${address}/call`, { method: "GetState" })
+  async function load() {
+    post(url, `/contract/${contractAddress}/call`, { method: "GetState" })
       .then((contractObj) => {
         response = JSON.stringify(contractObj);
-        contractObj["address"] = address;
+        contractObj["address"] = contractAddress;
         contract = contractObj;
         contract.kings = contract.kings.reverse()
         console.log(contract);
@@ -53,6 +58,23 @@
       .catch((error) => {
         console.error(error);
       });
+  }
+
+  const stringToHex = (str) => {
+    let hex = '';
+    for (let i = 0; i < str.length; i++) {
+      const charCode = str.charCodeAt(i);
+      const hexValue = charCode.toString(16);
+
+      // Pad with zeros to ensure two-digit representation
+      hex += hexValue.padStart(2, '0');
+    }
+    return hex;
+  };
+
+  export function updateParams()
+  {
+      return stringToHex(JSON.stringify({"method": "ClaimThrone", params: [name]}));
   }
 </script>
 
@@ -72,7 +94,7 @@
       </div>
 
       <p class="title">Current state of kingdom</p>
-      <div class="container fill-height">
+      <div class="container">
           <div class="column">
             <div class="row">
               <p class="header">Current King</p>
@@ -85,7 +107,10 @@
             </div>
             <div class="row">
               <p class="header">Amount required to overthrow the King</p>
-              <p class="text">{((contract.claimAmount + 1_000_000) / 1_000_000).toFixed(0)} kryo</p> <!--add 1 kryo to always round up-->
+              <p class="text">{(contract.claimAmount / 1_000_000).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 6})} kryo</p> <!--add 1 kryo to always round up-->
+            </div>
+            <div style="display: flex; justify-content: center">
+              <button class="btn-5" on:click={() => (showModal = true)}>CLAIM THRONE</button>
             </div>
           </div>
       </div>
@@ -148,7 +173,7 @@
       <p class="header">Claim amount</p>
       {#each contract.kings.slice(1) as king, i}
       <p class="text">
-        {(king.claimAmount / 1_000_000).toFixed(2)}
+        {(king.claimAmount / 1_000_000).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 6})} kryo
       </p>
     {/each}
     </div>
@@ -156,12 +181,27 @@
       <p class="header">Profit made</p>
       {#each contract.kings.slice(1) as king, i}
       <p class="text">
-        {(king.profit / 1_000_000).toFixed(2)}
+        {(king.profit / 1_000_000).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 6})} kryo
       </p>
     {/each}
     </div>
   </div>
   {/if}
+
+  <Modal bind:showModal let:dialog>
+    {#if contract}
+    Name for your king
+    <br />
+    <input bind:value={name} on:change={() => params = updateParams()}/>
+    <div style="margin: 10px; margin-top: 15px; display: flex; justify-content: center">
+      {#if name}
+      <a class="btn-5" href="kryolite:call/{contractAddress}/{contract.claimAmount}/{params}" on:click={() => dialog.close()}>CLAIM THRONE</a>
+      {:else}
+      <a class="btn-5" style="pointer-events: none; opacity: 0.5; cursor: not-allowed;" href="kryolite:call/{contractAddress}/{contract.claimAmount}/{params}" on:click={() => dialog.close()}>CLAIM THRONE</a>
+      {/if}
+    </div>
+    {/if}
+  </Modal>
 </body>
 
 <style>
@@ -175,7 +215,7 @@
         min-width: 50%;
         margin-right: 20px;
         height: 100%;
-        margin-bottom: -59px;
+        margin-bottom: -55px;
     }
 
     .instructions {
