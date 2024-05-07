@@ -2,7 +2,7 @@
   import Navbar from "./lib/navbar.svelte";
   import Modal from './lib/Modal.svelte';
 
-  const contractAddress = "kryo:aeckjgbfj5u8grv35ngqkyh85caekb5zregctx4t";
+  const contractAddress = "kryo:aeygkszqmhu3y3giba37acumac8cfz2tfcmk3hf9";
   const url = "https://testnet-1.kryolite.io";
 
   let response = "";
